@@ -1,6 +1,7 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.logger_config import logger
 from app.core.settings import APP_CONFIG
@@ -17,6 +18,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+
+
+# todo: доделать
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
 
 
 @app.get("/")

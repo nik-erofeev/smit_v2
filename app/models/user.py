@@ -1,8 +1,12 @@
+import typing
+
 from sqlalchemy import ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app import models
 from app.dao.database import Base, str_uniq
+
+if typing.TYPE_CHECKING:  # type: ignore
+    from app.models import Blog, Role
 
 
 class User(Base):
@@ -16,12 +20,13 @@ class User(Base):
         default=1,
         server_default=text("1"),
     )
-    role: Mapped["models.Role"] = relationship(
+    role: Mapped["Role"] = relationship(
         "Role",
         back_populates="users",
         lazy="joined",
     )
-    blogs: Mapped[list["models.Blog"]] = relationship(
+    blogs: Mapped[list["Blog"]] = relationship(
+        "Blog",
         back_populates="user",  # Должно совпадать с именем в модели Blogs
     )
 

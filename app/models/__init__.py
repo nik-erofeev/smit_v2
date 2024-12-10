@@ -1,10 +1,12 @@
 # flake8: noqa
 # isort:skip_file
+# todo: сюда импортируем новые модели
 
-# todo: добавляем сюда новые таблицы
+from .blog import *
+from .blogtag import *
+from .role import *
+from .tag import *
+from .user import *
 
-from app.models.blog import *
-from app.models.blogtag import *
-from app.models.tag import *
-from app.models.role import *
-from app.models.user import *
+
+# __all__ = ["User", "Blog", "Role", "Tag", "BlogTag"]
