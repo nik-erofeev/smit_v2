@@ -1,7 +1,12 @@
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from loguru import logger
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.dao.session_maker import SessionDep
 
 router = APIRouter(
     tags=["default"],
@@ -24,16 +29,15 @@ async def _exception() -> Any:
         logger.error(f"Use exception {e=!r}")
 
 
-# todo дописать
-# @router.get("/ready", include_in_schema=False)
-# async def _ready() -> bool:
-#     logger.debug("ready")
-#     try:
-#         logger.debug("testing db")
-#         async with self._db.get_session() as session:
-#             await session.execute(text("SELECT 1"))
-#     except SQLAlchemyError:
-#         raise HTTPException(500, "Database not ready")
-#     logger.debug("pg ready")
-#
-#     return True
+@router.get("/check_database", include_in_schema=True)
+async def _ready(
+    session: AsyncSession = SessionDep,
+) -> bool:
+    logger.debug("ready")
+    try:
+        await session.execute(text("SELECT 1"))
+    except SQLAlchemyError:
+        raise HTTPException(500, "Database not ready")
+    logger.debug("pg ready")
+
+    return True
