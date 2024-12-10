@@ -15,7 +15,7 @@ from app.api.auth.schemas import (
     SUserInfo,
     SUserRegister,
 )
-from app.dao.session_maker import SessionDep, TransactionSessionDep
+from app.dao.session_maker import SessionDep
 from app.models import User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/register/")
 async def register_user(
     user_data: SUserRegister,
-    session: AsyncSession = TransactionSessionDep,
+    session: AsyncSession = SessionDep,
 ) -> dict:
     user = await UsersDAO.find_one_or_none(
         session=session,

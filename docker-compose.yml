@@ -11,13 +11,12 @@ services:
       - custom
     ports:
       - "15432:5432"
-#    healthcheck:
-#      # # todo подтянуть из енвов
-#      #      test: [ "CMD-SHELL", "pg_isready -U ${DB_NAME} -d ${DB_DB}" ]
-#      test: [ "CMD-SHELL", "pg_isready -U user -d dbpass" ]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 3
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_NAME} -d ${DB_DB}" ]
+#      test: [ "CMD-SHELL", "pg_isready -U newuser -d new_smit_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 
   api:

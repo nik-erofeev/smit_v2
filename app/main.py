@@ -7,7 +7,14 @@ from app.core.logger_config import logger
 from app.core.settings import APP_CONFIG
 from app.routers import router
 
-app = FastAPI()
+app = FastAPI(
+    title="ExampleApp",
+    description="ExampleApp API 🚀",
+    version="1.0.0",
+    contact={"name": "Nik", "email": "example@example.com"},
+    openapi_url="/api/v1/openapi.json",
+    debug=True,
+)
 
 
 app.add_middleware(
@@ -23,6 +30,7 @@ app.include_router(router)
 # todo: доделать
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
+    logger.error(f"HTTP Exception: {exc.detail} - Status Code: {exc.status_code}")
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},

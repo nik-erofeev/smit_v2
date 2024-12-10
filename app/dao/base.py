@@ -86,6 +86,7 @@ class BaseDAO(Generic[T]):
         try:
             await session.flush()
             logger.info(f"Запись {cls.model.__name__} успешно добавлена.")
+            await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error(f"Ошибка при добавлении записи: {e}")
