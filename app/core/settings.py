@@ -17,7 +17,7 @@ class Environments(StrEnum):
 class DbConfig(BaseModel):
     dsn: str = "postgresql+asyncpg://user:password@host:port/db"
     max_size: int = 1
-    debug: bool = False
+    commit: bool = False
 
 
 class TGConfig(BaseModel):
@@ -37,7 +37,6 @@ class KafkaConfig(BaseModel):
 
 
 class AppConfig(BaseSettings):
-
     db: DbConfig = DbConfig()
     kafka: KafkaConfig = KafkaConfig()
     sentry_dsn: str | None = None
