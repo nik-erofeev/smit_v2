@@ -12,7 +12,10 @@ from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
 
 from app.core.settings import APP_CONFIG
 
-engine = create_async_engine(url=APP_CONFIG.db.dsn)
+engine = create_async_engine(
+    url=APP_CONFIG.db.dsn,
+    echo=APP_CONFIG.db.echo,
+)
 
 async_session_maker = async_sessionmaker(
     engine,

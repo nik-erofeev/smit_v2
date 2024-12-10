@@ -18,6 +18,7 @@ class DbConfig(BaseModel):
     dsn: str = "postgresql+asyncpg://user:password@host:port/db"
     max_size: int = 1
     commit: bool = False
+    echo: bool = False
 
 
 class TGConfig(BaseModel):
@@ -42,6 +43,8 @@ class AppConfig(BaseSettings):
     sentry_dsn: str | None = None
     tg: TGConfig = TGConfig()
     environment: Environments = Environments.local
+    SECRET_KEY: str | None = None
+    ALGORITHM: str | None = None
 
     cors_origin_regex: str = (
         r"(http://|https://)?(.*\.)?(qa|stage|localhost|0.0.0.0)(\.ru)?(:\d+)?$"
