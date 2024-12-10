@@ -94,3 +94,25 @@ class SUserInfo(UserBase):
     @computed_field
     def role_id(self) -> int:
         return self.role.id
+
+
+class UserRegResponse(BaseModel):
+    message: str = Field(
+        default="Вы успешно зарегистрированы!",
+        description="Сообщение о регистрации",
+    )
+
+
+class UAuthResponse(BaseModel):
+    ok: bool = Field(default=True, description="Успешность авторизации")
+    access_token: str = Field(description="Токен доступа")
+    message: str = Field(
+        default="Вы успешно авторизовались!",
+        description="Сообщение о авторизации",
+    )
+
+
+class UserOutResponse(BaseModel):
+    message: str = Field(
+        default="Пользователь успешно вышел из системы!",
+    )

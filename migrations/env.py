@@ -16,8 +16,7 @@ config = context.config
 
 
 section = config.config_ini_section
-print(APP_CONFIG.db.dsn)
-config.set_section_option(section, "DB_URL", APP_CONFIG.db.dsn)
+config.set_section_option(section, "DB_URL", str(APP_CONFIG.db.sqlalchemy_db_uri))
 
 
 # Interpret the config file for Python logging.

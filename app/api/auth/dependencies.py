@@ -12,11 +12,14 @@ from app.api.auth.exceptions import (
     TokenExpiredException,
     TokenNoFound,
 )
+from app.api.blog.dao import BlogDAO
+from app.api.blog.schemas import BlogFullResponse, BlogNotFind
 from app.core.settings import APP_CONFIG
 from app.dao.session_maker import SessionDep
 from app.models import User
 
 
+# todo: добавить oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 def get_token(request: Request):
     token = request.cookies.get("users_access_token")
     if not token:
@@ -31,8 +34,8 @@ async def get_current_user(
     try:
         payload = jwt.decode(
             token,
-            APP_CONFIG.SECRET_KEY,
-            algorithms=APP_CONFIG.ALGORITHM,
+            APP_CONFIG.secret_key,
+            algorithms=APP_CONFIG.algorithm,
         )
     except JWTError:
         raise NoJwtException
@@ -69,8 +72,8 @@ async def get_current_user_optional(
     try:
         payload = jwt.decode(
             token,
-            APP_CONFIG.SECRET_KEY,
-            algorithms=APP_CONFIG.ALGORITHM,
+            APP_CONFIG.secret_key,
+            algorithms=APP_CONFIG.algorithm,
         )
     except JWTError:
         return None
@@ -94,13 +97,14 @@ async def get_current_admin_user(current_user: User = Depends(get_current_user))
     raise ForbiddenException
 
 
-# todo Доделать
-# async def get_blog_info(
-#     blog_id: int,
-#     session: AsyncSession = SessionDep,  # type: ignore
-#     user_data: User | None = Depends(get_current_user_optional),
-# ) -> BlogFullResponse | BlogNotFind:
-#     author_id = user_data.id if user_data else None
-#     return await BlogDAO.get_full_blog_info(
-#         session=session, blog_id=blog_id, author_id=author_id
-#     )
+async def get_blog_info(
+    blog_id: int,
+    session: AsyncSession = SessionDep,
+    user_data: User | None = Depends(get_current_user_optional),
+) -> BlogFullResponse | BlogNotFind:
+    author_id = user_data.id if user_data else None
+    return await BlogDAO.get_full_blog_info(
+        session=session,
+        blog_id=blog_id,
+        author_id=author_id,
+    )

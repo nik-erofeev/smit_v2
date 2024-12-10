@@ -13,14 +13,14 @@ from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
 from app.core.settings import APP_CONFIG
 
 engine = create_async_engine(
-    url=APP_CONFIG.db.dsn,
+    url=str(APP_CONFIG.db.sqlalchemy_db_uri),
     echo=APP_CONFIG.db.echo,
 )
 
 async_session_maker = async_sessionmaker(
     engine,
     class_=AsyncSession,
-    expire_on_commit=APP_CONFIG.db.commit,
+    expire_on_commit=False,  # todo: обязательно False
 )
 
 str_uniq = Annotated[str, mapped_column(unique=True, nullable=False)]
