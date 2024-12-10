@@ -24,7 +24,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/register/")
 async def register_user(
     user_data: SUserRegister,
-    session: AsyncSession = TransactionSessionDep,  # type: ignore
+    session: AsyncSession = TransactionSessionDep,
 ) -> dict:
     user = await UsersDAO.find_one_or_none(
         session=session,
@@ -42,7 +42,7 @@ async def register_user(
 async def auth_user(
     response: Response,
     user_data: SUserAuth,
-    session: AsyncSession = SessionDep,  # type: ignore
+    session: AsyncSession = SessionDep,
 ):
     check = await authenticate_user(
         session=session,
@@ -69,7 +69,7 @@ async def get_me(user_data: User = Depends(get_current_user)) -> SUserInfo:
 
 @router.get("/all_users/")
 async def get_all_users(
-    session: AsyncSession = SessionDep,  # type: ignore
+    session: AsyncSession = SessionDep,
     user_data: User = Depends(get_current_admin_user),
 ) -> list[SUserInfo]:
     return await UsersDAO.find_all(session=session, filters=None)

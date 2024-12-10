@@ -25,9 +25,8 @@ def get_token(request: Request):
 
 
 async def get_current_user(
-    # todo
     token: str = Depends(get_token),
-    session: AsyncSession = SessionDep,  # type: ignore
+    session: AsyncSession = SessionDep,
 ):
     try:
         payload = jwt.decode(
@@ -62,7 +61,7 @@ def get_token_optional(request: Request) -> str | None:
 
 async def get_current_user_optional(
     token: str | None = Depends(get_token_optional),
-    session: AsyncSession = SessionDep,  # type: ignore
+    session: AsyncSession = SessionDep,
 ) -> User | None:
     if not token:
         return None

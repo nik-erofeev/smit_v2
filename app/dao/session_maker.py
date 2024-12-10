@@ -114,8 +114,14 @@ class DatabaseSessionManager:
 session_manager = DatabaseSessionManager(async_session_maker)
 
 # Зависимости FastAPI для использования сессий
-SessionDep = session_manager.session_dependency
-TransactionSessionDep = session_manager.transaction_session_dependency
+
+
+# todo: так ругается mypy
+# SessionDep = session_manager.session_dependency
+# TransactionSessionDep = session_manager.transaction_session_dependency
+
+SessionDep = Depends(session_manager.get_session)
+TransactionSessionDep = Depends(session_manager.get_transaction_session)
 
 # Пример использования декоратора
 # @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)

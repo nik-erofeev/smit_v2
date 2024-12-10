@@ -26,7 +26,7 @@ def create_access_token(data: dict) -> str:
 async def authenticate_user(
     email: EmailStr,
     password: str,
-    session: AsyncSession = SessionDep,  # type: ignore
+    session: AsyncSession = SessionDep,
 ):
     user = await UsersDAO.find_one_or_none(
         session=session,
