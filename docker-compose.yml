@@ -1,0 +1,29 @@
+services:
+  postgres:
+    container_name: postgres_db
+    image: postgres:latest
+    restart: unless-stopped
+    env_file:
+      - .env.compose.pg
+    volumes:
+      - postgres_storage_new:/var/lib/postgresql/data
+    networks:
+      - custom
+    ports:
+      - "15432:5432"
+#    healthcheck:
+#      # # todo подтянуть из енвов
+#      #      test: [ "CMD-SHELL", "pg_isready -U ${DB_NAME} -d ${DB_DB}" ]
+#      test: [ "CMD-SHELL", "pg_isready -U user -d dbpass" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 3
+
+
+volumes:
+  postgres_storage_new:
+    driver: local
+
+networks:
+  custom:
+    driver: bridge
