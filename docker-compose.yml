@@ -20,6 +20,27 @@ services:
 #      retries: 3
 
 
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ['/app_example/docker/app.sh']
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    networks:
+      - custom
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/check_database"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+
 volumes:
   postgres_storage_new:
     driver: local
