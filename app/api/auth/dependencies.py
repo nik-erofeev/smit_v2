@@ -34,8 +34,8 @@ async def get_current_user(
     try:
         payload = jwt.decode(
             token,
-            APP_CONFIG.SECRET_KEY,
-            algorithms=APP_CONFIG.ALGORITHM,
+            APP_CONFIG.secret_key,
+            algorithms=APP_CONFIG.algorithm,
         )
     except JWTError:
         raise NoJwtException
@@ -72,8 +72,8 @@ async def get_current_user_optional(
     try:
         payload = jwt.decode(
             token,
-            APP_CONFIG.SECRET_KEY,
-            algorithms=APP_CONFIG.ALGORITHM,
+            APP_CONFIG.secret_key,
+            algorithms=APP_CONFIG.algorithm,
         )
     except JWTError:
         return None
