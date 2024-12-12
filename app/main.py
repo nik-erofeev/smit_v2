@@ -31,7 +31,6 @@ app.add_middleware(
 app.include_router(router)
 
 
-# todo: доделать
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
     logger.error(f"HTTP Exception: {exc.detail} - Status Code: {exc.status_code}")

@@ -23,7 +23,6 @@ class DbConfig(BaseModel):
     name: str = ""
 
     max_size: int = 1
-    commit: bool = False
     echo: bool = False
 
     @computed_field  # type: ignore[prop-decorator]

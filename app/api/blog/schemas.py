@@ -58,3 +58,20 @@ class BlogFullResponse(BaseModelConfig):
 class BlogNotFind(BaseModel):
     message: str
     status: str
+
+
+class CreateBlogResponse(BaseModel):
+    status: str = Field(default="success")
+    message: str
+
+
+class BlogListResponse(BaseModel):
+    page: int
+    total_page: int
+    total_result: int
+    blogs: list[BlogFullResponse]
+
+
+class DeleteBlogResponse(BaseModel):
+    status: str
+    message: str

@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.api.blog.schemas import BlogFullResponse
+from app.api.blog.schemas import BlogFullResponse, DeleteBlogResponse
 from app.dao.base import BaseDAO
 from app.models import Blog, BlogTag, Tag
 
@@ -256,7 +256,7 @@ class BlogDAO(BaseDAO):
         session: AsyncSession,
         blog_id: int,
         author_id: int,
-    ) -> dict:
+    ) -> DeleteBlogResponse:
         """
         Метод для удаления блога. Удаление возможно только автором блога.
 
@@ -272,30 +272,33 @@ class BlogDAO(BaseDAO):
             blog = result.scalar_one_or_none()
 
             if not blog:
-                return {"message": f"Блог с ID {blog_id} не найден.", "status": "error"}
+                return DeleteBlogResponse(
+                    message=f"Блог с ID {blog_id} не найден.",
+                    status="error",
+                )
 
             # Проверяем, является ли пользователь автором блога
             if blog.author != author_id:
-                return {
-                    "message": "У вас нет прав на удаление этого блога.",
-                    "status": "error",
-                }
+                return DeleteBlogResponse(
+                    message="У вас нет прав на удаление этого блога.",
+                    status="error",
+                )
 
             # Удаляем блог
             await session.delete(blog)
             await session.flush()
 
-            return {
-                "message": f"Блог с ID {blog_id} успешно удален.",
-                "status": "success",
-            }
+            return DeleteBlogResponse(
+                message=f"Блог с ID {blog_id} успешно удален.",
+                status="success",
+            )
 
         except SQLAlchemyError as e:
             await session.rollback()
-            return {
-                "message": f"Произошла ошибка при удалении блога: {str(e)}",
-                "status": "error",
-            }
+            return DeleteBlogResponse(
+                message=f"Произошла ошибка при удалении блога: {str(e)}",
+                status="error",
+            )
 
 
 class BlogTagDAO(BaseDAO):
