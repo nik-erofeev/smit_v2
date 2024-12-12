@@ -1,3 +1,4 @@
+import sentry_sdk
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +7,9 @@ from fastapi.responses import JSONResponse
 from app.core.logger_config import logger
 from app.core.settings import APP_CONFIG
 from app.routers import router
+
+if APP_CONFIG.sentry_dsn and APP_CONFIG.environment != "local":
+    sentry_sdk.init(dsn=str(APP_CONFIG.sentry_dsn), enable_tracing=True)
 
 app = FastAPI(
     title="ExampleApp",
