@@ -77,6 +77,7 @@ class BaseDAO(Generic[T]):
     @classmethod
     async def add(cls, session: AsyncSession, values: BaseModel):
         # Добавить одну запись
+        # todo только TransactionSessionDep иначе переделать и добавить commit() на 90 строке
         values_dict = values.model_dump(exclude_unset=True)
         logger.info(
             f"Добавление записи {cls.model.__name__} с параметрами: {values_dict}",
@@ -86,7 +87,7 @@ class BaseDAO(Generic[T]):
         try:
             await session.flush()
             logger.info(f"Запись {cls.model.__name__} успешно добавлена.")
-            await session.commit()
+            # todo при успешном коммитится так как TransactionSessionDep
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error(f"Ошибка при добавлении записи: {e}")
