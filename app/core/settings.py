@@ -62,7 +62,7 @@ class Api(BaseModel):
     description: str = "ExampleApp API 🚀"
     version: str = "1.0.0"
     openapi_url: str = "/api/v1/openapi.json"
-    debug: bool = True
+    debug: bool = False
     v1: str = "/v1"
 
 
