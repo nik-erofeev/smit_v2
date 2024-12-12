@@ -12,10 +12,14 @@ from app.api.blog.schemas import (
     BlogFullResponse,
     BlogNotFind,
 )
+from app.core.settings import APP_CONFIG
 from app.dao.session_maker import SessionDep, TransactionSessionDep
 from app.models import User
 
-router = APIRouter(prefix="/v1", tags=["Блоги"])
+router = APIRouter(
+    prefix=APP_CONFIG.api.v1,
+    tags=["Блоги"],
+)
 
 
 @router.post("/posts/", summary="Добавление нового блога с тегами")

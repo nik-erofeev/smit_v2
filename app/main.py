@@ -12,12 +12,12 @@ if APP_CONFIG.sentry_dsn and APP_CONFIG.environment != "local":
     sentry_sdk.init(dsn=str(APP_CONFIG.sentry_dsn), enable_tracing=True)
 
 app = FastAPI(
-    title="ExampleApp",
-    description="ExampleApp API 🚀",
-    version="1.0.0",
+    title=APP_CONFIG.api.project_name,
+    description=APP_CONFIG.api.description,
+    version=APP_CONFIG.api.version,
     contact={"name": "Nik", "email": "example@example.com"},
-    openapi_url="/api/v1/openapi.json",
-    debug=True,
+    openapi_url=APP_CONFIG.api.openapi_url,
+    debug=APP_CONFIG.api.debug,
 )
 
 
@@ -41,7 +41,7 @@ async def http_exception_handler(request, exc: HTTPException):
     )
 
 
-@app.get("/")
+@app.get("/", tags=["Home"])
 def home_page():
     logger.info("Home page accessed")
     return {"message": "Добро пожаловать!  Эта заготовка "}

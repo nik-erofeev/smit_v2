@@ -57,13 +57,24 @@ class KafkaConfig(BaseModel):
         return f"{self.host}:{self.port}"
 
 
+class Api(BaseModel):
+    project_name: str = "ExampleApp"
+    description: str = "ExampleApp API 🚀"
+    version: str = "1.0.0"
+    openapi_url: str = "/api/v1/openapi.json"
+    debug: bool = True
+    v1: str = "/v1"
+
+
 class AppConfig(BaseSettings):
     db: DbConfig = DbConfig()
     kafka: KafkaConfig = KafkaConfig()
     sentry_dsn: HttpUrl | None = None
     tg: TGConfig = TGConfig()
     environment: Environments = Environments.local
-    secret_key: str | None = None
+    api: Api = Api()
+
+    secret_key: str | None = None  # secrets.token_urlsafe(32)
     algorithm: str | None = None
 
     cors_origin_regex: str = (
