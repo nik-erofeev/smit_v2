@@ -1,7 +1,7 @@
 import os
 from enum import StrEnum, unique
 
-from pydantic import BaseModel, computed_field, PostgresDsn
+from pydantic import BaseModel, computed_field, HttpUrl, PostgresDsn
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -42,8 +42,8 @@ class DbConfig(BaseModel):
 
 
 class TGConfig(BaseModel):
-    token: str = ""
-    chat_id: str = ""
+    token: str | None = None
+    chat_id: str | None = None
 
 
 class KafkaConfig(BaseModel):
@@ -60,7 +60,7 @@ class KafkaConfig(BaseModel):
 class AppConfig(BaseSettings):
     db: DbConfig = DbConfig()
     kafka: KafkaConfig = KafkaConfig()
-    sentry_dsn: str | None = None
+    sentry_dsn: HttpUrl | None = None
     tg: TGConfig = TGConfig()
     environment: Environments = Environments.local
     SECRET_KEY: str | None = None
