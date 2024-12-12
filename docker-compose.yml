@@ -12,7 +12,7 @@ services:
     ports:
       - "15432:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_NAME} -d ${DB_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB__USER} -d ${DB__NAME}" ]
 #      test: [ "CMD-SHELL", "pg_isready -U newuser -d new_smit_db" ]
       interval: 10s
       timeout: 5s

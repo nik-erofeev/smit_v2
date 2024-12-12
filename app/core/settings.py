@@ -1,7 +1,8 @@
 import os
 from enum import StrEnum, unique
 
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field, PostgresDsn
+from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,10 +16,29 @@ class Environments(StrEnum):
 
 
 class DbConfig(BaseModel):
-    dsn: str = "postgresql+asyncpg://user:password@host:port/db"
+    user: str = ""
+    password: str = ""
+    host: str = ""
+    port: int = 5432
+    name: str = ""
+
     max_size: int = 1
     commit: bool = False
     echo: bool = False
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def sqlalchemy_db_uri(self) -> PostgresDsn:
+        multi_host_url = MultiHostUrl.build(
+            scheme="postgresql+asyncpg",
+            username=self.user,
+            password=self.password,
+            host=self.host,
+            port=self.port,
+            path=self.name,
+        )
+
+        return PostgresDsn(str(multi_host_url))
 
 
 class TGConfig(BaseModel):
@@ -62,6 +82,7 @@ class AppConfig(BaseSettings):
         env_nested_delimiter="__",
         env_file_encoding="utf-8",
         env_ignore_empty=True,
+        extra="ignore",
         env_file=_ENV_FILES,
         # env_file=(f"{BASE_DIR}/.env2", f"{BASE_DIR}/.env.local", f"{BASE_DIR}/.env"),
     )
