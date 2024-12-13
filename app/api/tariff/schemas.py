@@ -28,3 +28,11 @@ class TariffRespSchema(BaseModelConfig):
     rate: float
     created_at: datetime
     date_accession_id: int
+
+
+class DeleteTariffSchema(BaseModelConfig):
+    id: int
+
+
+class RespDeleteTariffSchema(BaseModelConfig):
+    message: str

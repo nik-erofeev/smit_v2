@@ -8,6 +8,7 @@ from app.api.tariff.dao import TariffDAO
 from app.api.tariff.example_descriptions import add_tariff_request_example
 from app.api.tariff.schemas import (
     CreateTariffRespSchema,
+    RespDeleteTariffSchema,
     TariffRespSchema,
     TariffSchema,
 )
@@ -48,3 +49,13 @@ async def get_tariff(tariff_id: int, session: AsyncSession = TransactionSessionD
         tariff_id=tariff_id,
         session=session,
     )
+
+
+@router.delete(
+    "tariff/{tariff_id}",
+    response_model=RespDeleteTariffSchema,
+    response_class=ORJSONResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def delete_tariff(tariff_id: int, session: AsyncSession = TransactionSessionDep):
+    return await TariffDAO.delete_tariff_by_id(tariff_id, session)

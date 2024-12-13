@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.tariff.schemas import (
     CreateTariffRespSchema,
+    DeleteTariffSchema,
+    RespDeleteTariffSchema,
     TariffRespSchema,
     TariffSchema,
 )
@@ -82,3 +84,24 @@ class TariffDAO(BaseDAO):
 
         result_dict = result.to_dict()
         return TariffRespSchema.model_validate(result_dict)
+
+    @classmethod
+    async def delete_tariff_by_id(
+        cls,
+        tariff_id: int,
+        session: AsyncSession,
+    ) -> RespDeleteTariffSchema:
+        tariff = await cls.find_one_or_none_by_id(tariff_id, session)
+        if not tariff:
+            logger.warning(f"Tariff with id {tariff_id} not found.")
+            raise HTTPException(status_code=404, detail="Тариф не найден")
+
+        try:
+            delete_tariff = DeleteTariffSchema(id=tariff_id)
+            await cls.delete(session=session, filters=delete_tariff)
+            logger.info(f"Tariff with ID {tariff_id} has been deleted successfully.")
+            return RespDeleteTariffSchema(
+                message=f"Tariff with ID {tariff_id} has been deleted.",
+            )
+        except SQLAlchemyError:
+            raise HTTPException(status_code=500, detail="Ошибка базы данных")
