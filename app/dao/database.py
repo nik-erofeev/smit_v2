@@ -46,4 +46,15 @@ class Base(AsyncAttrs, DeclarativeBase):
 
     def __repr__(self) -> str:
         """Строковое представление объекта для удобства отладки."""
-        return f"<{self.__class__.__name__}(id={self.id}, created_at={self.created_at}, updated_at={self.updated_at})>"
+
+        # представление 3х полей +  использовать  self.to_dict в наследниках
+        # return f"<{self.__class__.__name__}(id={self.id}, created_at={self.created_at}, updated_at={self.updated_at})>"
+
+        fmt = "{}({})"
+        # fmt = "{}.{}({})"  # добавляем пакет
+        # package = self.__class__.__module__  # также можно добавить имя пакета в откладку
+        class_ = self.__class__.__name__
+        attrs = sorted((k, getattr(self, k)) for k in self.__mapper__.columns.keys())
+        sattrs = ", ".join("{}={!r}".format(*x) for x in attrs)
+        return fmt.format(class_, sattrs)
+        # return fmt.format(package, class_, sattrs)  # если нужен пакет в откладке
