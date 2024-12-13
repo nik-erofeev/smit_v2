@@ -17,7 +17,11 @@ class BaseDAO(Generic[T]):
     model: type[T]
 
     @classmethod
-    async def find_one_or_none_by_id(cls, data_id: int, session: AsyncSession):
+    async def find_one_or_none_by_id(
+        cls,
+        data_id: int,
+        session: AsyncSession,
+    ) -> T | None:
         # Найти запись по ID
         logger.info(f"Поиск {cls.model.__name__} с ID: {data_id}")
         try:
@@ -34,7 +38,11 @@ class BaseDAO(Generic[T]):
             raise
 
     @classmethod
-    async def find_one_or_none(cls, session: AsyncSession, filters: BaseModel):
+    async def find_one_or_none(
+        cls,
+        session: AsyncSession,
+        filters: BaseModel,
+    ) -> T | None:
         # Найти одну запись по фильтрам
         filter_dict = filters.model_dump(exclude_unset=True)
         logger.info(
@@ -54,7 +62,11 @@ class BaseDAO(Generic[T]):
             raise
 
     @classmethod
-    async def find_all(cls, session: AsyncSession, filters: BaseModel | None):
+    async def find_all(
+        cls,
+        session: AsyncSession,
+        filters: BaseModel | None,
+    ) -> list[T]:
         if filters:
             filter_dict = filters.model_dump(exclude_unset=True)
         else:
@@ -75,7 +87,7 @@ class BaseDAO(Generic[T]):
             raise
 
     @classmethod
-    async def add(cls, session: AsyncSession, values: BaseModel):
+    async def add(cls, session: AsyncSession, values: BaseModel) -> T:
         # Добавить одну запись
         # todo только TransactionSessionDep иначе переделать и добавить commit() на 90 строке
         values_dict = values.model_dump(exclude_unset=True)
@@ -95,7 +107,11 @@ class BaseDAO(Generic[T]):
         return new_instance
 
     @classmethod
-    async def add_many(cls, session: AsyncSession, instances: list[BaseModel]):
+    async def add_many(
+        cls,
+        session: AsyncSession,
+        instances: list[BaseModel],
+    ) -> list[T]:
         # Добавить несколько записей
         values_list = [item.model_dump(exclude_unset=True) for item in instances]
         logger.info(
@@ -113,7 +129,12 @@ class BaseDAO(Generic[T]):
         return new_instances
 
     @classmethod
-    async def update(cls, session: AsyncSession, filters: BaseModel, values: BaseModel):
+    async def update(
+        cls,
+        session: AsyncSession,
+        filters: BaseModel,
+        values: BaseModel,
+    ) -> int:
         # Обновить записи по фильтрам
         filter_dict = filters.model_dump(exclude_unset=True)
         values_dict = values.model_dump(exclude_unset=True)
@@ -137,7 +158,7 @@ class BaseDAO(Generic[T]):
             raise e
 
     @classmethod
-    async def delete(cls, session: AsyncSession, filters: BaseModel):
+    async def delete(cls, session: AsyncSession, filters: BaseModel) -> int:
         # Удалить записи по фильтру
         filter_dict = filters.model_dump(exclude_unset=True)
         logger.info(f"Удаление записей {cls.model.__name__} по фильтру: {filter_dict}")
@@ -157,7 +178,7 @@ class BaseDAO(Generic[T]):
             raise e
 
     @classmethod
-    async def count(cls, session: AsyncSession, filters: BaseModel):
+    async def count(cls, session: AsyncSession, filters: BaseModel) -> int:
         # Подсчитать количество записей
         filter_dict = filters.model_dump(exclude_unset=True)
         logger.info(
@@ -166,7 +187,7 @@ class BaseDAO(Generic[T]):
         try:
             query = select(func.count(cls.model.id)).filter_by(**filter_dict)
             result = await session.execute(query)
-            count = result.scalar()
+            count = result.scalar() or 0
             logger.info(f"Найдено {count} записей.")
             return count
         except SQLAlchemyError as e:
@@ -180,7 +201,7 @@ class BaseDAO(Generic[T]):
         page: int = 1,
         page_size: int = 10,
         filters: BaseModel | None = None,
-    ):
+    ) -> list[T]:
         # Пагинация записей
         filter_dict = filters.model_dump(exclude_unset=True) if filters else {}
         logger.info(
@@ -218,7 +239,7 @@ class BaseDAO(Generic[T]):
         session: AsyncSession,
         unique_fields: list[str],
         values: BaseModel,
-    ):
+    ) -> T:
         """Создать запись или обновить существующую"""
         values_dict = values.model_dump(exclude_unset=True)
         filter_dict = {
