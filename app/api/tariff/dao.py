@@ -5,7 +5,11 @@ from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.tariff.schemas import TariffResponseSchema, TariffSchema
+from app.api.tariff.schemas import (
+    CreateTariffRespSchema,
+    TariffRespSchema,
+    TariffSchema,
+)
 from app.dao.base import BaseDAO
 from app.models import DateAccession, Tariff
 
@@ -18,7 +22,7 @@ class TariffDAO(BaseDAO):
         cls,
         session: AsyncSession,
         tariff_data: dict[date, list[TariffSchema]],
-    ) -> list[TariffResponseSchema]:
+    ) -> list[CreateTariffRespSchema]:
         response_tariffs = []
         for created_at, tariffs in tariff_data.items():
             try:
@@ -42,7 +46,7 @@ class TariffDAO(BaseDAO):
                     # await cls.add(session, insert_tariff)
 
                 response_tariffs.append(
-                    TariffResponseSchema(
+                    CreateTariffRespSchema(
                         id=date_accession_model.id,
                         created_at=created_at,
                         tariffs=tariffs,
@@ -62,3 +66,19 @@ class TariffDAO(BaseDAO):
 
         logger.info(f"Created {len(response_tariffs)} tariffs successfully.")
         return response_tariffs
+
+    @classmethod
+    async def get_tariff_by_id(
+        cls,
+        tariff_id: int,
+        session: AsyncSession,
+    ) -> TariffRespSchema:
+        result = await cls.find_one_or_none_by_id(
+            data_id=tariff_id,
+            session=session,
+        )
+        if not result:
+            raise HTTPException(status_code=404, detail="Тариф не найден")
+
+        result_dict = result.to_dict()
+        return TariffRespSchema.model_validate(result_dict)

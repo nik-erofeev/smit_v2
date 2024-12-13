@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,11 +12,19 @@ class TariffSchema(BaseModelConfig):
     rate: float = Field(ge=0, le=1, description="Рейтинг тарифа")
 
 
-class TariffResponseSchema(BaseModel):
+class CreateTariffRespSchema(BaseModel):
     id: int
     created_at: date
     tariffs: list[TariffSchema]
 
 
 class CreateTariffSchema(TariffSchema):  # todo: если через базовую .add
+    date_accession_id: int
+
+
+class TariffRespSchema(BaseModelConfig):
+    id: int
+    category_type: str
+    rate: float
+    created_at: datetime
     date_accession_id: int
