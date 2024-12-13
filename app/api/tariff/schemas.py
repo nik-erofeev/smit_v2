@@ -16,3 +16,7 @@ class TariffResponseSchema(BaseModel):
     id: int
     created_at: date
     tariffs: list[TariffSchema]
+
+
+class CreateTariffSchema(TariffSchema):  # todo: если через базовую .add
+    date_accession_id: int

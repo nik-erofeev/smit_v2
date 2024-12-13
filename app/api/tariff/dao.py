@@ -35,6 +35,12 @@ class TariffDAO(BaseDAO):
 
                     session.add(tariff_model)
 
+                    # todo: если через базовую add
+                    # insert_tariff = CreateTariffSchema(
+                    #     **tariff.model_dump(), date_accession_id=date_accession_model.id
+                    # )
+                    # await cls.add(session, insert_tariff)
+
                 response_tariffs.append(
                     TariffResponseSchema(
                         id=date_accession_model.id,

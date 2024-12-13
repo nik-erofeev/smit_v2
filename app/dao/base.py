@@ -250,7 +250,7 @@ class BaseDAO(Generic[T]):
         try:
             existing = await cls.find_one_or_none(
                 session,
-                BaseModel.construct(**filter_dict),
+                BaseModel.model_construct(**filter_dict),
             )
             if existing:
                 # Обновляем существующую запись
