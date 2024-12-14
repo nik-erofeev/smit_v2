@@ -11,6 +11,8 @@ from app.api.tariff.schemas import (
     RespDeleteTariffSchema,
     TariffRespSchema,
     TariffSchema,
+    UpdateTariffRespSchema,
+    UpdateTariffSchema,
 )
 from app.core.settings import APP_CONFIG
 from app.dao.session_maker import TransactionSessionDep
@@ -40,6 +42,7 @@ async def add_tariff(
 
 @router.get(
     "/tariffs/{tariff_id}",
+    summary="Получить тариф",
     response_model=TariffRespSchema,
     response_class=ORJSONResponse,
     status_code=status.HTTP_200_OK,
@@ -53,6 +56,7 @@ async def get_tariff(tariff_id: int, session: AsyncSession = TransactionSessionD
 
 @router.delete(
     "/tariffs/{tariff_id}",
+    summary="Удалить тариф",
     response_model=RespDeleteTariffSchema,
     response_class=ORJSONResponse,
     status_code=status.HTTP_200_OK,
@@ -63,6 +67,7 @@ async def delete_tariff(tariff_id: int, session: AsyncSession = TransactionSessi
 
 @router.get(
     "/tariffs",
+    summary="Получить список тарифов",
     response_model=list[TariffRespSchema],
     response_class=ORJSONResponse,
     status_code=status.HTTP_200_OK,
@@ -73,3 +78,18 @@ async def get_all_tariffs(
     session: AsyncSession = TransactionSessionDep,
 ):
     return await TariffDAO.get_all_tariffs(page, page_size, session)
+
+
+@router.patch(
+    "/tariffs/{tariff_id}",
+    summary="Обновить тариф",
+    response_model=UpdateTariffRespSchema,
+    response_class=ORJSONResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def update_tariff(
+    tariff_id: int,
+    new_tariff: UpdateTariffSchema,
+    session: AsyncSession = TransactionSessionDep,
+):
+    return await TariffDAO.update_tariff(tariff_id, new_tariff, session)

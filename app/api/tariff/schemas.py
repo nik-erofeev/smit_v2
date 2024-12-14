@@ -36,3 +36,22 @@ class DeleteTariffSchema(BaseModelConfig):
 
 class RespDeleteTariffSchema(BaseModelConfig):
     message: str
+
+
+class UpdateTariffSchema(BaseModelConfig):
+    category_type: str | None = Field(
+        default=None,
+        max_length=20,
+        description="Категория тарифа",
+    )
+    rate: float | None = Field(default=None, ge=0, le=1, description="Рейтинг тарифа")
+
+
+class UpdateFilterSchema(BaseModelConfig):
+    id: int
+
+
+class UpdateTariffRespSchema(BaseModelConfig):
+    message: str = Field(default="Тариф успешно изменен")
+    status: str = Field(default="success")
+    new_tariff: dict | None = None

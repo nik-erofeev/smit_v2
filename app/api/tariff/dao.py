@@ -11,6 +11,9 @@ from app.api.tariff.schemas import (
     RespDeleteTariffSchema,
     TariffRespSchema,
     TariffSchema,
+    UpdateFilterSchema,
+    UpdateTariffRespSchema,
+    UpdateTariffSchema,
 )
 from app.dao.base import BaseDAO
 from app.models import DateAccession, Tariff
@@ -133,3 +136,20 @@ class TariffDAO(BaseDAO):
             )
         except SQLAlchemyError:
             raise HTTPException(status_code=500, detail="Ошибка базы данных")
+
+    @classmethod
+    async def update_tariff(
+        cls,
+        tariff_id: int,
+        new_tariff: UpdateTariffSchema,
+        session: AsyncSession,
+    ) -> UpdateTariffRespSchema:
+        filters = UpdateFilterSchema(id=tariff_id)
+        result = await cls.update(session, filters, new_tariff)
+        if not result:
+            logger.info(f"Tariff with ID {tariff_id} not found.")
+            raise HTTPException(status_code=404, detail="Тариф не найден")
+
+        return UpdateTariffRespSchema(
+            new_tariff=new_tariff.model_dump(exclude_none=True),
+        )
