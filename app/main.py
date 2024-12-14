@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 import sentry_sdk
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -11,6 +13,16 @@ from app.routers import router
 if APP_CONFIG.sentry_dsn and APP_CONFIG.environment != "local":
     sentry_sdk.init(dsn=str(APP_CONFIG.sentry_dsn), enable_tracing=True)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):  # noqa
+    logger.info("Starting server...Hello")
+    # Здесь можно выполнить инициализацию, например, подключение к базе данных
+    yield
+    # Код, который выполняется при завершении работы приложения
+    logger.info("Server stop by user, shutting down! Bye-Bye!!!")
+
+
 app = FastAPI(
     title=APP_CONFIG.api.project_name,
     description=APP_CONFIG.api.description,
@@ -18,6 +30,7 @@ app = FastAPI(
     contact={"name": "Nik", "email": "example@example.com"},
     openapi_url=APP_CONFIG.api.openapi_url,
     debug=APP_CONFIG.api.debug,
+    lifespan=lifespan,
 )
 
 
