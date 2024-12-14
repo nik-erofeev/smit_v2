@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Body, status
+from fastapi import APIRouter, Body, Query, status
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +22,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/tariff",
+    "/tariffs",
     summary="Добавить тариф",
     response_model=list[CreateTariffRespSchema],
     response_class=ORJSONResponse,
@@ -39,7 +39,7 @@ async def add_tariff(
 
 
 @router.get(
-    "tariff/{tariff_id}",
+    "/tariffs/{tariff_id}",
     response_model=TariffRespSchema,
     response_class=ORJSONResponse,
     status_code=status.HTTP_200_OK,
@@ -52,10 +52,24 @@ async def get_tariff(tariff_id: int, session: AsyncSession = TransactionSessionD
 
 
 @router.delete(
-    "tariff/{tariff_id}",
+    "/tariffs/{tariff_id}",
     response_model=RespDeleteTariffSchema,
     response_class=ORJSONResponse,
     status_code=status.HTTP_200_OK,
 )
 async def delete_tariff(tariff_id: int, session: AsyncSession = TransactionSessionDep):
     return await TariffDAO.delete_tariff_by_id(tariff_id, session)
+
+
+@router.get(
+    "/tariffs",
+    response_model=list[TariffRespSchema],
+    response_class=ORJSONResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_all_tariffs(
+    page: int = Query(1, ge=1, description="Номер страницы"),
+    page_size: int = Query(10, ge=10, le=100, description="Записей на странице"),
+    session: AsyncSession = TransactionSessionDep,
+):
+    return await TariffDAO.get_all_tariffs(page, page_size, session)

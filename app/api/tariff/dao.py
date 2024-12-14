@@ -41,7 +41,7 @@ class TariffDAO(BaseDAO):
 
                     session.add(tariff_model)
 
-                    # todo: если через базовую add
+                    # todo: если через базовую Base.add
                     # insert_tariff = CreateTariffSchema(
                     #     **tariff.model_dump(), date_accession_id=date_accession_model.id
                     # )
@@ -86,6 +86,21 @@ class TariffDAO(BaseDAO):
         # result_dict = result.to_dict()
         # return TariffRespSchema.model_validate(result_dict)
         return TariffRespSchema.model_validate(result)
+
+    @classmethod
+    async def get_all_tariffs(
+        cls,
+        page: int,
+        page_size: int,
+        session: AsyncSession,
+    ):
+        result = await cls.paginate(
+            session=session,
+            page=page,
+            page_size=page_size,
+            filters=None,
+        )
+        return [TariffRespSchema.model_validate(tariff) for tariff in result]
 
     @classmethod
     async def delete_tariff_by_id(
