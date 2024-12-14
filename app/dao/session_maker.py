@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from functools import wraps
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from loguru import logger
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
@@ -28,7 +28,7 @@ class DatabaseSessionManager:
             try:
                 yield session
             except Exception as e:
-                logger.error(f"Ошибка при создании сессии базы данных: {e}")
+                logger.error(f"Ошибка при создании сессии базы данных: {e=!r}")
                 raise
             finally:
                 await session.close()
@@ -41,10 +41,13 @@ class DatabaseSessionManager:
         try:
             yield
             await session.commit()
+        except HTTPException:
+            await session.rollback()
+            raise
         except Exception as e:
             await session.rollback()
-            logger.exception(f"Ошибка транзакции: {e}")
-            raise
+            logger.error(f"Ошибка транзакции: {e=!r}")
+            raise HTTPException(status_code=500, detail="Ошибка транзакции")
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
@@ -90,7 +93,7 @@ class DatabaseSessionManager:
                         return result
                     except Exception as e:
                         await session.rollback()
-                        logger.error(f"Ошибка при выполнении транзакции: {e}")
+                        logger.error(f"Ошибка при выполнении транзакции: {e=!r}")
                         raise
                     finally:
                         await session.close()
