@@ -16,6 +16,8 @@ from app.api.tariff.schemas import (
 )
 from app.core.settings import APP_CONFIG
 from app.dao.session_maker import TransactionSessionDep
+from app.kafka.dependencies import KafkaProducerDep
+from app.kafka.producer import KafkaProducer
 
 router = APIRouter(
     prefix=APP_CONFIG.api.v1,
@@ -36,16 +38,22 @@ async def add_tariff(
         example=add_tariff_request_example,
     ),
     session: AsyncSession = TransactionSessionDep,
+    producer: KafkaProducer = KafkaProducerDep,
 ):
-    return await TariffDAO.create_tariff(session=session, tariff_data=tariff_data)
+    return await TariffDAO.create_tariff(
+        session=session,
+        tariff_data=tariff_data,
+        producer=producer,
+    )
 
 
 @router.post("/tariffs/upload")
 async def upload_tariffs(
     file: UploadFile = File(...),
     session: AsyncSession = TransactionSessionDep,
+    producer: KafkaProducer = KafkaProducerDep,
 ):
-    return await TariffDAO.upload_tariffs(session, file)
+    return await TariffDAO.upload_tariffs(session, producer, file)
 
 
 @router.get(
@@ -69,8 +77,12 @@ async def get_tariff(tariff_id: int, session: AsyncSession = TransactionSessionD
     response_class=ORJSONResponse,
     status_code=status.HTTP_200_OK,
 )
-async def delete_tariff(tariff_id: int, session: AsyncSession = TransactionSessionDep):
-    return await TariffDAO.delete_tariff_by_id(tariff_id, session)
+async def delete_tariff(
+    tariff_id: int,
+    session: AsyncSession = TransactionSessionDep,
+    producer: KafkaProducer = KafkaProducerDep,
+):
+    return await TariffDAO.delete_tariff_by_id(tariff_id, session, producer)
 
 
 @router.get(
@@ -99,5 +111,6 @@ async def update_tariff(
     tariff_id: int,
     new_tariff: UpdateTariffSchema,
     session: AsyncSession = TransactionSessionDep,
+    producer: KafkaProducer = KafkaProducerDep,
 ):
-    return await TariffDAO.update_tariff(tariff_id, new_tariff, session)
+    return await TariffDAO.update_tariff(tariff_id, new_tariff, session, producer)

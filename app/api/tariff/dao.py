@@ -16,7 +16,9 @@ from app.api.tariff.schemas import (
     UpdateTariffRespSchema,
     UpdateTariffSchema,
 )
+from app.api.tariff.utils import ActionType, create_message
 from app.dao.base import BaseDAO
+from app.kafka.producer import KafkaProducer
 from app.models import DateAccession, Tariff
 
 
@@ -55,6 +57,7 @@ class TariffDAO(BaseDAO):
         cls,
         session: AsyncSession,
         tariff_data: dict[date, list[TariffSchema]],
+        producer: KafkaProducer,
     ) -> list[CreateTariffRespSchema]:
         response_tariffs = []
         for created_at, tariffs in tariff_data.items():
@@ -88,6 +91,12 @@ class TariffDAO(BaseDAO):
                 logger.info(
                     f"Successfully created tariffs for published_at {created_at}.",
                 )
+                message = create_message(
+                    action=ActionType.CREATE_TARIFF,
+                    date_accession_id=date_accession_model.id,
+                    updated_at=str(date_accession_model.updated_at),
+                )
+                await producer.send_message(message)
 
             except SQLAlchemyError as e:
                 logger.error(f"Database error occurred while adding tariff: {e=!r}")
@@ -104,12 +113,13 @@ class TariffDAO(BaseDAO):
     async def upload_tariffs(
         cls,
         session: AsyncSession,
+        producer: KafkaProducer,
         file: UploadFile = File(...),
     ):
         contents = await file.read()
         tariffs_data = TariffFileProcessor.process_file(contents)
         logger.info(f"Tariff file {file.filename} uploaded and processed.")
-        return await cls.create_tariff(session, tariffs_data)
+        return await cls.create_tariff(session, tariffs_data, producer)
 
     @classmethod
     async def get_tariff_by_id(
@@ -149,6 +159,7 @@ class TariffDAO(BaseDAO):
         cls,
         tariff_id: int,
         session: AsyncSession,
+        producer: KafkaProducer,
     ) -> RespDeleteTariffSchema:
         tariff = await cls.find_one_or_none_by_id(tariff_id, session)
 
@@ -170,6 +181,15 @@ class TariffDAO(BaseDAO):
             # await session.flush()
 
             logger.info(f"Tariff with ID {tariff_id} has been deleted successfully.")
+
+            message = create_message(
+                action=ActionType.DELETE_TARIFF,
+                date_accession_id=tariff.date_accession_id,
+                tariff_id=tariff_id,
+            )
+            await producer.send_message(message)
+            logger.info(f"Send message{message} to kafka")
+
             return RespDeleteTariffSchema(
                 message=f"Tariff with ID {tariff_id} has been deleted.",
             )
@@ -182,6 +202,7 @@ class TariffDAO(BaseDAO):
         tariff_id: int,
         new_tariff: UpdateTariffSchema,
         session: AsyncSession,
+        producer: KafkaProducer,
     ) -> UpdateTariffRespSchema:
         filters = UpdateFilterSchema(id=tariff_id)
         result = await cls.update(session, filters, new_tariff)
@@ -210,6 +231,9 @@ class TariffDAO(BaseDAO):
         #     logger.error(f"Ошибка при обновлении записей: {e}")
         #     raise e
         # без наследования (конец)
+
+        message = create_message(action=ActionType.UPDATE_TARIFF, tariff_id=tariff_id)
+        await producer.send_message(message)
 
         return UpdateTariffRespSchema(
             new_tariff=new_tariff.model_dump(exclude_none=True),
