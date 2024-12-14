@@ -146,9 +146,31 @@ class TariffDAO(BaseDAO):
     ) -> UpdateTariffRespSchema:
         filters = UpdateFilterSchema(id=tariff_id)
         result = await cls.update(session, filters, new_tariff)
+
+        # без наследования
+        # query = select(cls.model).filter_by(id=tariff_id)
+        # result = await session.execute(query)
+        # tariff = result.scalar_one_or_none()
+
+        # if not tariff:
         if not result:
             logger.info(f"Tariff with ID {tariff_id} not found.")
             raise HTTPException(status_code=404, detail="Тариф не найден")
+
+        # без наследования (продолжение)
+        # tariff_dict = new_tariff.model_dump(exclude_unset=True)
+        # query_2 = (
+        #     update(cls.model).where(cls.model.id == tariff_id).values(**tariff_dict)
+        # )
+        #
+        # try:
+        #     await session.execute(query_2)
+        #
+        # except SQLAlchemyError as e:
+        #     await session.rollback()
+        #     logger.error(f"Ошибка при обновлении записей: {e}")
+        #     raise e
+        # без наследования (конец)
 
         return UpdateTariffRespSchema(
             new_tariff=new_tariff.model_dump(exclude_none=True),
