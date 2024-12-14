@@ -82,8 +82,10 @@ class TariffDAO(BaseDAO):
         if not result:
             raise HTTPException(status_code=404, detail="Тариф не найден")
 
-        result_dict = result.to_dict()
-        return TariffRespSchema.model_validate(result_dict)
+        # todo: если __repr__  3 полей объявлен Base + .to_dict
+        # result_dict = result.to_dict()
+        # return TariffRespSchema.model_validate(result_dict)
+        return TariffRespSchema.model_validate(result)
 
     @classmethod
     async def delete_tariff_by_id(
