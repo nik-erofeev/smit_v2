@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Body, Query, status
+from fastapi import APIRouter, Body, File, Query, status, UploadFile
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,6 +38,14 @@ async def add_tariff(
     session: AsyncSession = TransactionSessionDep,
 ):
     return await TariffDAO.create_tariff(session=session, tariff_data=tariff_data)
+
+
+@router.post("/tariffs/upload")
+async def upload_tariffs(
+    file: UploadFile = File(...),
+    session: AsyncSession = TransactionSessionDep,
+):
+    return await TariffDAO.upload_tariffs(session, file)
 
 
 @router.get(

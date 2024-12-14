@@ -1,6 +1,7 @@
+import json
 from datetime import date
 
-from fastapi import HTTPException
+from fastapi import File, HTTPException, UploadFile
 from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +18,33 @@ from app.api.tariff.schemas import (
 )
 from app.dao.base import BaseDAO
 from app.models import DateAccession, Tariff
+
+
+class TariffFileProcessor:
+    @staticmethod
+    def process_file(contents: bytes) -> dict[date, list[TariffSchema]]:
+        try:
+            data = json.loads(contents)
+            tariffs = {}
+            for date_str, tariff_list in data.items():
+                created_at = date.fromisoformat(date_str)
+                tariff_objects = [TariffSchema(**tariff) for tariff in tariff_list]
+                tariffs[created_at] = tariff_objects
+                logger.info(
+                    f"Processed rates for date {created_at}: {tariff_objects}",
+                )
+            return tariffs
+
+        except json.JSONDecodeError:
+            logger.exception("Invalid JSON format.")
+            raise HTTPException(status_code=400, detail="Invalid JSON format")
+
+        except Exception as e:
+            logger.exception(f"An error occurred while processing the file: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="An error occurred while processing the file",
+            )
 
 
 class TariffDAO(BaseDAO):
@@ -71,6 +99,17 @@ class TariffDAO(BaseDAO):
 
         logger.info(f"Created {len(response_tariffs)} tariffs successfully.")
         return response_tariffs
+
+    @classmethod
+    async def upload_tariffs(
+        cls,
+        session: AsyncSession,
+        file: UploadFile = File(...),
+    ):
+        contents = await file.read()
+        tariffs_data = TariffFileProcessor.process_file(contents)
+        logger.info(f"Tariff file {file.filename} uploaded and processed.")
+        return await cls.create_tariff(session, tariffs_data)
 
     @classmethod
     async def get_tariff_by_id(

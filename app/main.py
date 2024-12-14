@@ -5,9 +5,11 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app.core.logger_config import logger
 from app.core.settings import APP_CONFIG
+from app.dao.database import async_session_maker
 from app.routers import router
 
 if APP_CONFIG.sentry_dsn and APP_CONFIG.environment != "local":
@@ -18,8 +20,23 @@ if APP_CONFIG.sentry_dsn and APP_CONFIG.environment != "local":
 async def lifespan(app: FastAPI):  # noqa
     logger.info("Starting server...Hello")
     # Здесь можно выполнить инициализацию, например, подключение к базе данных
+    # Инициализация соединения с базой данных
+    logger.info("Initializing database connection...")
+    async with async_session_maker() as session:
+        # Здесь можно выполнить очистку БД или создание таблиц
+
+        # Проверка соединения с базой данных
+        async with session.begin():
+            await session.execute(text("SELECT 1"))
+
+    logger.info("Database connection initialized successfully.")
+
     yield
+
     # Код, который выполняется при завершении работы приложения
+    logger.info("Shutting down server...")
+
+    # Здесь можно добавить код для завершения фоновых задач или других ресурсов, если это необходимо
     logger.info("Server stop by user, shutting down! Bye-Bye!!!")
 
 
