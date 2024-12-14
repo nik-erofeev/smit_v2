@@ -16,22 +16,18 @@ from app.routers import router
 async def lifespan(app: FastAPI):
     logger.info("Starting server...Hello")
 
-    # Инициализация соединения с базой данных
     logger.info("Initializing database connection...")
     async with async_session_maker() as session:
         async with session.begin():
             await session.execute(text("SELECT 1"))
     logger.info("Database connection initialized successfully.")
 
-    # Инициализация KafkaProducer
     logger.info("Starting Kafka producer...")
     producer = KafkaProducer()
-    await producer.start()
-    app.state.kafka_producer = producer  # Сохраняем producer в состоянии приложения
+    await producer.start()  # Инициализация KafkaProducer
 
     yield  # Здесь приложение будет работать
 
-    # Код, который выполняется при завершении работы приложения
     logger.info("Shutting down server...")
     await producer.stop()  # Остановка KafkaProducer
 

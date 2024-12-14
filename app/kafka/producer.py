@@ -9,6 +9,13 @@ from app.core.settings import APP_CONFIG
 
 
 class KafkaProducer:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(
         self,
         bootstrap_servers: str = APP_CONFIG.kafka.bootstrap_servers,
@@ -43,7 +50,7 @@ class KafkaProducer:
             enable_idempotence=True,
         )
         await self.producer.start()
-        logger.info("Kafka producer connected to %s", self.bootstrap_servers)
+        logger.info(f"Kafka producer connected to {self.bootstrap_servers}")
 
     async def stop(self) -> None:
         for topic, batch in self.batches.items():
