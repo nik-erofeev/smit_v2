@@ -92,6 +92,12 @@ class TariffDAO(BaseDAO):
         session: AsyncSession,
     ) -> RespDeleteTariffSchema:
         tariff = await cls.find_one_or_none_by_id(tariff_id, session)
+
+        # # через новый запрос
+        # query = select(cls.model).filter_by(id=tariff_id)
+        # result = await session.execute(query)
+        # tariff = result.scalar_one_or_none()
+
         if not tariff:
             logger.warning(f"Tariff with id {tariff_id} not found.")
             raise HTTPException(status_code=404, detail="Тариф не найден")
@@ -99,6 +105,11 @@ class TariffDAO(BaseDAO):
         try:
             delete_tariff = DeleteTariffSchema(id=tariff_id)
             await cls.delete(session=session, filters=delete_tariff)
+
+            # # через новый запрос
+            # await session.delete(tariff)
+            # await session.flush()
+
             logger.info(f"Tariff with ID {tariff_id} has been deleted successfully.")
             return RespDeleteTariffSchema(
                 message=f"Tariff with ID {tariff_id} has been deleted.",
