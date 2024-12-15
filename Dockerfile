@@ -21,7 +21,7 @@ COPY docker /app_example/docker
 COPY migrations /app_example/migrations
 COPY pyproject.toml /app_example
 COPY alembic.ini /app_example
-#COPY pyproject.toml ./
+COPY favicon.ico ./
 COPY pyproject.toml poetry.lock* ./
 
 RUN pip install --upgrade pip && \
