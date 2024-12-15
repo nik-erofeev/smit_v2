@@ -1,6 +1,6 @@
 services:
   postgres:
-    container_name: postgres_db
+    container_name: postgres-smit
     image: postgres:latest
     restart: unless-stopped
     env_file:
@@ -19,8 +19,27 @@ services:
       retries: 3
 
 
+  postgres_exporter:
+    platform: linux/x86_64
+    container_name: postgres_exporter-smit
+    image: wrouesnel/postgres_exporter:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # проверить почему не подтягиваются env
+#      DATA_SOURCE_URI: "postgres://${DB__USER}:${DB__PASSWORD}@${DB__HOST}:${DB__PORT}/${DB__NAME}?sslmode=disable"
+      DATA_SOURCE_NAME: "postgres://newuser:dbpass@postgres:5432/new_smit_db?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+    networks:
+      - custom
+
+
   api:
-    container_name: api
+    container_name: api-smit
     build:
       context: .
       dockerfile: Dockerfile
@@ -42,8 +61,8 @@ services:
       retries: 3
 
   zookeeper:
-    container_name: "zookeeper_name"
     platform: linux/x86_64
+    container_name: zookeeper-smit
     image: confluentinc/cp-zookeeper:latest
     restart: unless-stopped
     environment:
@@ -55,8 +74,8 @@ services:
       - custom
 
   kafka:
-    container_name: "kafka_name"
     platform: linux/x86_64
+    container_name: kafka-smit
     image: confluentinc/cp-kafka:latest
     restart: unless-stopped
     depends_on:
@@ -77,7 +96,7 @@ services:
 
 
   kafka-ui:
-    container_name: "kafka-ui_name"
+    container_name: kafka-ui-smit
     image: provectuslabs/kafka-ui
     restart: unless-stopped
     ports:
@@ -91,8 +110,47 @@ services:
     networks:
       - custom
 
+  prometheus:
+    platform: linux/x86_64
+    container_name: prometheus-smit
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - '19090:9090'
+    networks:
+      - custom
+    depends_on:
+      - api
+
+  grafana:
+    platform: linux/x86_64
+    container_name: "grafana"
+    image: grafana/grafana-oss:latest
+    #    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - '13000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - grafana-config:/etc/grafana
+    networks:
+      - custom
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_storage_new:
+    driver: local
+  grafana_data:
+    driver: local
+  grafana-config:
+    driver: local
+  prometheus-data:
     driver: local
 
 networks:

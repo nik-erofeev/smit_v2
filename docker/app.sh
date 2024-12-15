@@ -1,8 +1,11 @@
 #!/bin/bash
 
-
-echo "Waiting for 1 seconds to allow PostgreSQL to start..."
-sleep 1
+#  вместо статического ожидания + postgresql-client в dockerfile
+#sleep 5
+echo "Waiting for PostgreSQL to start..."
+until pg_isready -h postgres -U newuser; do
+  sleep 1
+done
 
 echo "Starting migrations..."
 alembic upgrade head
@@ -17,7 +20,8 @@ fi
 
 
 echo "Waiting for Kafka to start..."
-# sleep 10  # или так
+#  вместо статического ожидания + netcat-openbsd в dockerfile
+# sleep 10
 while ! nc -z kafka 9092; do
   sleep 1
 done
