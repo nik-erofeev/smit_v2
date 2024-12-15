@@ -7,6 +7,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.tariff.schemas import (
+    CalculateCostResponseSchema,
+    CalculateCostSchema,
+    CategoryTypeSchema,
     CreateTariffRespSchema,
     DeleteTariffSchema,
     RespDeleteTariffSchema,
@@ -237,4 +240,47 @@ class TariffDAO(BaseDAO):
 
         return UpdateTariffRespSchema(
             new_tariff=new_tariff.model_dump(exclude_none=True),
+        )
+
+    @classmethod
+    async def calculate_cost(
+        cls,
+        data: CalculateCostSchema,
+        session: AsyncSession,
+        producer: KafkaProducer,
+    ):
+        # пример через фильтр модели
+        tariff = await cls.find_one_or_none(
+            session=session,
+            filters=CategoryTypeSchema(id=data.tariff_id),
+        )
+
+        # так же по id базового
+        # tariff = await cls.find_one_or_none_by_id(data.tariff_id, session)
+
+        if not tariff:
+            logger.info(f"Tariff {data.tariff_id}. not found")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Rate not found for the {data.tariff_id}",
+            )
+
+        insurance_cost = data.declared_value * tariff.rate
+        logger.info(
+            f"Insurance cost calculated: {insurance_cost} for declared value: {data.declared_value} and rate: {tariff.rate}.",
+        )
+
+        message = create_message(
+            ActionType.CALCULATE_INSURANCE_COST,
+            tariff.date_accession_id,
+            str(tariff.updated_at),
+            data.tariff_id,
+        )
+        await producer.send_message(message)
+
+        return CalculateCostResponseSchema(
+            tariff_id=data.tariff_id,
+            declared_value=data.declared_value,
+            rate=tariff.rate,
+            insurance_cost=insurance_cost,
         )
