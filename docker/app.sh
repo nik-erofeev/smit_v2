@@ -16,5 +16,12 @@ if [ $MIGRATION_STATUS -ne 0 ]; then
 fi
 
 
+echo "Waiting for Kafka to start..."
+# sleep 10  # или так
+while ! nc -z kafka 9092; do
+  sleep 1
+done
+
+
 echo "Starting FastAPI server..."
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
