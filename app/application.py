@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import text
 
 from app.core.logger_config import logger
@@ -65,5 +65,9 @@ def create_app(config: AppConfig) -> FastAPI:
     def home_page():
         logger.info("Home page accessed")
         return {"message": "Добро пожаловать! Эта заготовка"}
+
+    @app.get("/favicon.ico")
+    async def _favicon():
+        return FileResponse("favicon.ico")
 
     return app
