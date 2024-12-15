@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.tariff.dao import TariffDAO
 from app.api.tariff.example_descriptions import add_tariff_request_example
 from app.api.tariff.schemas import (
+    CalculateCostResponseSchema,
+    CalculateCostSchema,
     CreateTariffRespSchema,
     RespDeleteTariffSchema,
     TariffRespSchema,
@@ -20,13 +22,13 @@ from app.kafka.dependencies import KafkaProducerDep
 from app.kafka.producer import KafkaProducer
 
 router = APIRouter(
-    prefix=APP_CONFIG.api.v1,
+    prefix=f"{APP_CONFIG.api.v1}/tariffs",
     tags=["Тарифы"],
 )
 
 
 @router.post(
-    "/tariffs",
+    "/",
     summary="Добавить тариф",
     response_model=list[CreateTariffRespSchema],
     response_class=ORJSONResponse,
@@ -47,7 +49,22 @@ async def add_tariff(
     )
 
 
-@router.post("/tariffs/upload")
+@router.post(
+    "/calculate",
+    summary="Страховая стоимость",
+    response_model=CalculateCostResponseSchema,
+    response_class=ORJSONResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def calculate_cost(
+    data: CalculateCostSchema,
+    session: AsyncSession = TransactionSessionDep,
+    producer: KafkaProducer = KafkaProducerDep,
+):
+    return await TariffDAO.calculate_cost(data, session, producer)
+
+
+@router.post("/upload")
 async def upload_tariffs(
     file: UploadFile = File(...),
     session: AsyncSession = TransactionSessionDep,
@@ -57,7 +74,7 @@ async def upload_tariffs(
 
 
 @router.get(
-    "/tariffs/{tariff_id}",
+    "/{tariff_id}",
     summary="Получить тариф",
     response_model=TariffRespSchema,
     response_class=ORJSONResponse,
@@ -71,7 +88,7 @@ async def get_tariff(tariff_id: int, session: AsyncSession = TransactionSessionD
 
 
 @router.delete(
-    "/tariffs/{tariff_id}",
+    "/{tariff_id}",
     summary="Удалить тариф",
     response_model=RespDeleteTariffSchema,
     response_class=ORJSONResponse,
@@ -86,7 +103,7 @@ async def delete_tariff(
 
 
 @router.get(
-    "/tariffs",
+    "/",
     summary="Получить список тарифов",
     response_model=list[TariffRespSchema],
     response_class=ORJSONResponse,
@@ -101,7 +118,7 @@ async def get_all_tariffs(
 
 
 @router.patch(
-    "/tariffs/{tariff_id}",
+    "/{tariff_id}",
     summary="Обновить тариф",
     response_model=UpdateTariffRespSchema,
     response_class=ORJSONResponse,

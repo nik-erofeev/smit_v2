@@ -55,3 +55,17 @@ class UpdateTariffRespSchema(BaseModelConfig):
     message: str = Field(default="Тариф успешно изменен")
     status: str = Field(default="success")
     new_tariff: dict | None = None
+
+
+class CategoryTypeSchema(BaseModelConfig):
+    id: int
+
+
+class CalculateCostSchema(BaseModelConfig):
+    tariff_id: int
+    declared_value: float = Field(ge=0, description="Объявленная стоимость")
+
+
+class CalculateCostResponseSchema(CalculateCostSchema):
+    rate: float = Field(ge=0, le=1, description="Рейтинг тарифа")
+    insurance_cost: float = Field(ge=0, description="Стоимость страхования")
