@@ -88,6 +88,8 @@ class AppConfig(BaseSettings):
         f"{BASE_DIR}/.env",  # последний перезапишет
     ]
 
+    download_dir: str = os.path.join(BASE_DIR, "app/static")
+
     model_config = SettingsConfigDict(
         env_nested_delimiter="__",
         env_file_encoding="utf-8",
