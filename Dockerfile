@@ -14,7 +14,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app_example
 
-RUN apt-get update && apt-get install -y curl netcat-openbsd && apt-get clean
+RUN apt-get update && \
+    apt-get install -y postgresql-client curl netcat-openbsd && \
+    apt-get clean
 
 COPY app /app_example/app
 COPY docker /app_example/docker

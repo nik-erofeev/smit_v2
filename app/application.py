@@ -3,7 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from prometheus_client.exposition import make_asgi_app
 from sqlalchemy import text
+from starlette_prometheus import PrometheusMiddleware
 
 from app.core.logger_config import logger
 from app.core.settings import AppConfig
@@ -50,6 +52,9 @@ def create_app(config: AppConfig) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
+    app.mount("/metrics", make_asgi_app())
 
     app.include_router(router)
 
