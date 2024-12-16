@@ -6,6 +6,7 @@ from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.tariff.redis_client import RedisClientTariff
 from app.api.tariff.schemas import (
     CalculateCostResponseSchema,
     CalculateCostSchema,
@@ -129,18 +130,30 @@ class TariffDAO(BaseDAO):
         cls,
         tariff_id: int,
         session: AsyncSession,
+        redis: RedisClientTariff,
     ) -> TariffRespSchema:
+        # Проверяем кеш в редисе. Если есть возвращаем из кеша
+        cache = await redis.get_tariff_cache()
+        if cache and tariff_id in cache:
+            return TariffRespSchema(**cache[tariff_id])
+
         result = await cls.find_one_or_none_by_id(
             data_id=tariff_id,
             session=session,
         )
+
         if not result:
             raise HTTPException(status_code=404, detail="Тариф не найден")
 
         # todo: если __repr__  3 полей объявлен Base + .to_dict
         # result_dict = result.to_dict()
         # return TariffRespSchema.model_validate(result_dict)
-        return TariffRespSchema.model_validate(result)
+
+        tariff = TariffRespSchema.model_validate(result)
+        # отправляем в редис
+        await redis.set_tariff_cache({tariff_id: tariff.model_dump()})
+
+        return tariff
 
     @classmethod
     async def get_all_tariffs(
