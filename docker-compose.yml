@@ -110,6 +110,13 @@ services:
     networks:
       - custom
 
+  redis:
+    image: redis:6.2-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - custom
+
   prometheus:
     platform: linux/x86_64
     container_name: prometheus-smit

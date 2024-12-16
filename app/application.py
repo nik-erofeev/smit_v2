@@ -4,33 +4,29 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
-from sqlalchemy import text
 
 from app.core.logger_config import logger
 from app.core.settings import AppConfig
-from app.dao.database import async_session_maker
-from app.kafka.producer import KafkaProducer
+from app.kafka.dependencies import kafka_producer
+from app.redis.dependencies import redis_cli
 from app.routers import router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting server...Hello")
-
-    logger.info("Initializing database connection...")
-    async with async_session_maker() as session:
-        async with session.begin():
-            await session.execute(text("SELECT 1"))
-    logger.info("Database connection initialized successfully.")
+    logger.info("Starting server...")
 
     logger.info("Starting Kafka producer...")
-    producer = KafkaProducer()
-    await producer.start()  # Инициализация KafkaProducer
+    await kafka_producer.start()  # если нужен постоянный коннект
+
+    logger.info("Starting Redis client...")
+    await redis_cli.setup()  # если нужен постоянный коннект
 
     yield  # Здесь приложение будет работать
 
     logger.info("Shutting down server...")
-    await producer.stop()  # Остановка KafkaProducer
+    await kafka_producer.stop()
+    await redis_cli.close()
 
 
 def create_app(config: AppConfig) -> FastAPI:
@@ -77,7 +73,7 @@ def create_app(config: AppConfig) -> FastAPI:
 
     @app.get("/", tags=["Home"])
     def home_page():
-        logger.info("Home page accessed")
+        logger.debug("Home page accessed")
         return {"message": "Добро пожаловать! Эта заготовка"}
 
     @app.get("/favicon.ico")

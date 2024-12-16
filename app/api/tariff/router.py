@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.tariff.dao import TariffDAO
 from app.api.tariff.example_descriptions import add_tariff_request_example
+from app.api.tariff.redis_client import RedisClientTariff
 from app.api.tariff.schemas import (
     CalculateCostResponseSchema,
     CalculateCostSchema,
@@ -20,6 +21,7 @@ from app.core.settings import APP_CONFIG
 from app.dao.session_maker import TransactionSessionDep
 from app.kafka.dependencies import KafkaProducerDep
 from app.kafka.producer import KafkaProducer
+from app.redis.dependencies import RedisClientTariffDep
 
 router = APIRouter(
     prefix=f"{APP_CONFIG.api.v1}/tariffs",
@@ -80,10 +82,15 @@ async def upload_tariffs(
     response_class=ORJSONResponse,
     status_code=status.HTTP_200_OK,
 )
-async def get_tariff(tariff_id: int, session: AsyncSession = TransactionSessionDep):
+async def get_tariff(
+    tariff_id: int,
+    session: AsyncSession = TransactionSessionDep,
+    redis: RedisClientTariff = RedisClientTariffDep,
+):
     return await TariffDAO.get_tariff_by_id(
         tariff_id=tariff_id,
         session=session,
+        redis=redis,
     )
 
 

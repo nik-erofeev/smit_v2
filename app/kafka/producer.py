@@ -18,8 +18,8 @@ class KafkaProducer:
 
     def __init__(
         self,
-        bootstrap_servers: str = APP_CONFIG.kafka.bootstrap_servers,
-        default_topic: str = APP_CONFIG.kafka.topik,
+        bootstrap_servers: str,
+        default_topic: str,
     ):
         self.bootstrap_servers = bootstrap_servers
         self.producer: AIOKafkaProducer | None = None
@@ -50,7 +50,7 @@ class KafkaProducer:
             enable_idempotence=True,
         )
         await self.producer.start()
-        logger.info(f"Kafka producer connected to {self.bootstrap_servers}")
+        logger.debug(f"Kafka producer connected to {self.bootstrap_servers}")
 
     async def stop(self) -> None:
         for topic, batch in self.batches.items():
