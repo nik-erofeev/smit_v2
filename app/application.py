@@ -3,9 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from prometheus_client.exposition import make_asgi_app
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
-from starlette_prometheus import PrometheusMiddleware
 
 from app.core.logger_config import logger
 from app.core.settings import AppConfig
@@ -53,10 +52,20 @@ def create_app(config: AppConfig) -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
-    app.mount("/metrics", make_asgi_app())
+    # from prometheus_client.exposition import make_asgi_app
+    # from starlette_prometheus import PrometheusMiddleware
+    # app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
+    # app.mount("/metrics", make_asgi_app())
 
     app.include_router(router)
+
+    # после app.include_router, то будут видный в сваггере. Иначе объявлять до
+    # эндпоинт для отображения метрик для их дальнейшего сбора Прометеусом
+    instrumentator = Instrumentator(
+        should_group_status_codes=False,
+        excluded_handlers=[".*admin.*", "/metrics"],
+    )
+    instrumentator.instrument(app).expose(app)
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request, exc: HTTPException):
