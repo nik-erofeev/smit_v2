@@ -116,6 +116,20 @@ services:
       - "6379:6379"
     networks:
       - custom
+  rmq:
+    container_name: rmq-smit
+    image: rabbitmq:3-management-alpine
+    env_file:
+      - .env.compose.rmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    depends_on:
+      - api
+    networks:
+      - custom
 
   prometheus:
     platform: linux/x86_64
@@ -158,6 +172,8 @@ volumes:
   grafana-config:
     driver: local
   prometheus-data:
+    driver: local
+  rabbitmq_data:
     driver: local
 
 networks:
