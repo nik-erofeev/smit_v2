@@ -4,7 +4,7 @@ from notifiers.logging import NotificationHandler
 from app.core.settings import APP_CONFIG
 
 file_path_log = "log.log"
-logger.add(file_path_log, level="CRITICAL", rotation="10 MB")
+logger.add(file_path_log, level="ERROR", rotation="10 MB")
 
 # send Notifications TG
 if APP_CONFIG.tg.token and APP_CONFIG.tg.chat_id and APP_CONFIG.environment != "local":
