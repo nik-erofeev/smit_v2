@@ -56,6 +56,10 @@ class KafkaConfig(BaseModel):
         return f"{self.host}:{self.port}"
 
 
+class RedisConfig(BaseModel):
+    host: str = ""
+
+
 class Api(BaseModel):
     project_name: str = "ExampleApp"
     description: str = "ExampleApp API 🚀"
@@ -72,6 +76,7 @@ class AppConfig(BaseSettings):
     tg: TGConfig = TGConfig()
     environment: Environments = Environments.local
     api: Api = Api()
+    redis: RedisConfig = RedisConfig()
 
     secret_key: str | None = None  # secrets.token_urlsafe(32)
     algorithm: str | None = None
