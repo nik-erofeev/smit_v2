@@ -1,8 +1,10 @@
+import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.templating import Jinja2Templates
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.logger_config import logger
@@ -53,31 +55,40 @@ def create_app(config: AppConfig) -> FastAPI:
     # app.add_middleware(PrometheusMiddleware, filter_unhandled_paths=True)
     # app.mount("/metrics", make_asgi_app())
 
-    app.include_router(router)
-
-    # после app.include_router, то будут видный в сваггере. Иначе объявлять до
     # эндпоинт для отображения метрик для их дальнейшего сбора Прометеусом
     instrumentator = Instrumentator(
         should_group_status_codes=False,
         excluded_handlers=[".*admin.*", "/metrics"],
     )
-    instrumentator.instrument(app).expose(app)
+    instrumentator.instrument(app).expose(app, include_in_schema=True)  # можно выкл
 
-    @app.exception_handler(HTTPException)
-    async def http_exception_handler(request, exc: HTTPException):
-        logger.error(f"HTTP Exception: {exc.detail} - Status Code: {exc.status_code}")
+    app.include_router(router)
+
+    @app.exception_handler(Exception)
+    async def http_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error(f"An unexpected error occurred: {exc=!r}")
         return JSONResponse(
-            status_code=exc.status_code,
-            content={"detail": exc.detail},
+            status_code=500,
+            content={"detail": "An unexpected error occurred"},
         )
 
-    @app.get("/", tags=["Home"])
-    def home_page():
-        logger.debug("Home page accessed")
-        return {"message": "Добро пожаловать! Эта заготовка"}
+    # локально и в докере разные workdir при запуске приложения
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+    FAVICON_PATH = os.path.join(BASE_DIR, "../favicon.ico")
 
-    @app.get("/favicon.ico")
-    async def _favicon():
-        return FileResponse("favicon.ico")
+    templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
+    @app.get("/", tags=["Home"], include_in_schema=False)
+    def home_page(request: Request) -> Response:
+        logger.debug("Home page accessed")
+        return templates.TemplateResponse(
+            name="index.html",
+            context={"request": request},
+        )
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def _favicon() -> FileResponse:
+        return FileResponse(FAVICON_PATH)
 
     return app
