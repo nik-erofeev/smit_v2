@@ -7,7 +7,7 @@ from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.tariff.rabbit_producer import RabbitProducer, RoutingKey
+from app.api.tariff.rabbit_producer import RabbitProducer
 from app.api.tariff.redis_client import RedisClientTariff
 from app.api.tariff.schemas import (
     CalculateCostResponseSchema,
@@ -27,6 +27,7 @@ from app.api.tariff.utils import ActionType, create_message
 from app.dao.base import BaseDAO
 from app.kafka.producer import KafkaProducer
 from app.models import DateAccession, Tariff
+from app.rabbit.models import RoutingKey
 
 
 class TariffFileProcessor:

@@ -7,7 +7,6 @@ from app.core.settings import APP_CONFIG
 
 rabbit_producer = RabbitProducer(
     rmq_config=APP_CONFIG.rabbit,
-    base_vhost=APP_CONFIG.rabbit.vhost,
 )
 
 
