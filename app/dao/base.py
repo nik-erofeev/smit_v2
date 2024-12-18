@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any, Generic, TypeVar
 
 from loguru import logger
@@ -110,7 +111,7 @@ class BaseDAO(Generic[T]):
     async def add_many(
         cls,
         session: AsyncSession,
-        instances: list[BaseModel],
+        instances: Sequence[BaseModel],
     ) -> list[T]:
         # Добавить несколько записей
         values_list = [item.model_dump(exclude_unset=True) for item in instances]

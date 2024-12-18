@@ -1,11 +1,123 @@
 {
     "2020-06-01": [
         {
-            "category_type": "Glass",
+            "category_type": "Glass1",
             "rate": "0.04"
         },
         {
-            "category_type": "Other",
+            "category_type": "Glass2",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass3",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass4",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass5",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass6",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass7",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass8",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass9",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass10",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass11",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass12",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass13",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass14",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Glass15",
+            "rate": "0.04"
+        },
+        {
+            "category_type": "Other1",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other2",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other3",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other4",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other5",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other6",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other7",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other8",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other9",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other10",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other11",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other12",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other13",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other14",
+            "rate": "0.01"
+        },
+        {
+            "category_type": "Other15",
             "rate": "0.01"
         }
     ],

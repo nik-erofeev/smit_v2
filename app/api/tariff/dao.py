@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import date
 
@@ -13,6 +14,7 @@ from app.api.tariff.schemas import (
     CalculateCostSchema,
     CategoryTypeSchema,
     CreateTariffRespSchema,
+    CreateTariffSchema,
     DeleteTariffSchema,
     RespDeleteTariffSchema,
     TariffRespSchema,
@@ -72,20 +74,33 @@ class TariffDAO(BaseDAO):
                 session.add(date_accession_model)
                 await session.flush()
 
-                for tariff in tariffs:
-                    tariff_model = cls.model(
-                        category_type=tariff.category_type,
-                        rate=tariff.rate,
+                # # todo: если добавлять по 1 тарифу
+                # for tariff in tariffs:
+                #     tariff_model = cls.model(
+                #         category_type=tariff.category_type,
+                #         rate=tariff.rate,
+                #         date_accession_id=date_accession_model.id,
+                #     )
+                #
+                #     session.add(tariff_model)
+                #
+                #     # todo: если добавлять через базовую Base.add
+                #     # insert_tariff = CreateTariffSchema(
+                #     #     **tariff.model_dump(), date_accession_id=date_accession_model.id
+                #     # )
+                #     # await cls.add(session, insert_tariff)
+
+                # для add_many создаем список
+                tariff_models = [
+                    CreateTariffSchema(
+                        **tariff.model_dump(),
                         date_accession_id=date_accession_model.id,
                     )
+                    for tariff in tariffs
+                ]
 
-                    session.add(tariff_model)
-
-                    # todo: если через базовую Base.add
-                    # insert_tariff = CreateTariffSchema(
-                    #     **tariff.model_dump(), date_accession_id=date_accession_model.id
-                    # )
-                    # await cls.add(session, insert_tariff)
+                # Добавляем через  add_many для загрузки списка
+                await cls.add_many(session, tariff_models)
 
                 response_tariffs.append(
                     CreateTariffRespSchema(
@@ -102,11 +117,14 @@ class TariffDAO(BaseDAO):
                     date_accession_id=date_accession_model.id,
                     updated_at=str(date_accession_model.updated_at),
                 )
-                await kafka.send_message(message)
 
-                await rabbit.publish_event(
-                    message=message,
-                    routing_key=RoutingKey.OBJECT_CREATE,
+                # запускаем параллельно
+                await asyncio.gather(
+                    kafka.send_message(message),
+                    rabbit.publish_event(
+                        message=message,
+                        routing_key=RoutingKey.OBJECT_CREATE,
+                    ),
                 )
 
             except SQLAlchemyError as e:
@@ -200,7 +218,7 @@ class TariffDAO(BaseDAO):
 
         try:
             delete_tariff = DeleteTariffSchema(id=tariff_id)
-            await cls.delete(session=session, filters=delete_tariff)
+            # await cls.delete(session=session, filters=delete_tariff)  # todo: в geather можно
 
             # # через новый запрос
             # await session.delete(tariff)
@@ -213,14 +231,17 @@ class TariffDAO(BaseDAO):
                 date_accession_id=tariff.date_accession_id,
                 tariff_id=tariff_id,
             )
-            await kafka.send_message(message)
 
-            await rabbit.publish_event(
-                message=message,
-                routing_key=RoutingKey.OBJECT_DELETE,
+            # запускаем параллельно
+            await asyncio.gather(
+                cls.delete(session=session, filters=delete_tariff),
+                kafka.send_message(message),
+                rabbit.publish_event(
+                    message=message,
+                    routing_key=RoutingKey.OBJECT_DELETE,
+                ),
+                redis.delete_tariff_cache(tariff_id),
             )
-
-            await redis.delete_tariff_cache(tariff_id)
 
             return RespDeleteTariffSchema(
                 message=f"Tariff with ID {tariff_id} has been deleted.",
@@ -272,12 +293,14 @@ class TariffDAO(BaseDAO):
             new_tariff=new_tariff.model_dump(),
         )
 
-        await redis.update_tariff_cache(tariff_id, new_tariff.model_dump())
-
-        await kafka.send_message(message)
-        await rabbit.publish_event(
-            message=message,
-            routing_key=RoutingKey.OBJECT_UPDATE,
+        # Запускаем  параллельно
+        await asyncio.gather(
+            redis.update_tariff_cache(tariff_id, new_tariff.model_dump()),
+            kafka.send_message(message),
+            rabbit.publish_event(
+                message=message,
+                routing_key=RoutingKey.OBJECT_UPDATE,
+            ),
         )
 
         return UpdateTariffRespSchema(
@@ -319,11 +342,14 @@ class TariffDAO(BaseDAO):
             str(tariff.updated_at),
             data.tariff_id,
         )
-        await kafka.send_message(message)
 
-        await rabbit.publish_event(
-            message=message,
-            routing_key=RoutingKey.OBJECT_CALCULATE,
+        # Запускаем  параллельно
+        await asyncio.gather(
+            kafka.send_message(message),
+            rabbit.publish_event(
+                message=message,
+                routing_key=RoutingKey.OBJECT_CALCULATE,
+            ),
         )
 
         return CalculateCostResponseSchema(
