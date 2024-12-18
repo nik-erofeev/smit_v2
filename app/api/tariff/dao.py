@@ -6,6 +6,7 @@ from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.tariff.rabbit_producer import RabbitProducer, RoutingKey
 from app.api.tariff.redis_client import RedisClientTariff
 from app.api.tariff.schemas import (
     CalculateCostResponseSchema,
@@ -61,7 +62,8 @@ class TariffDAO(BaseDAO):
         cls,
         session: AsyncSession,
         tariff_data: dict[date, list[TariffSchema]],
-        producer: KafkaProducer,
+        kafka: KafkaProducer,
+        rabbit: RabbitProducer,
     ) -> list[CreateTariffRespSchema]:
         response_tariffs = []
         for created_at, tariffs in tariff_data.items():
@@ -100,7 +102,12 @@ class TariffDAO(BaseDAO):
                     date_accession_id=date_accession_model.id,
                     updated_at=str(date_accession_model.updated_at),
                 )
-                await producer.send_message(message)
+                await kafka.send_message(message)
+
+                await rabbit.publish_event(
+                    message=message,
+                    routing_key=RoutingKey.OBJECT_CREATE,
+                )
 
             except SQLAlchemyError as e:
                 logger.error(f"Database error occurred while adding tariff: {e=!r}")
@@ -117,13 +124,14 @@ class TariffDAO(BaseDAO):
     async def upload_tariffs(
         cls,
         session: AsyncSession,
-        producer: KafkaProducer,
+        kafka: KafkaProducer,
+        rabbit: RabbitProducer,
         file: UploadFile = File(...),
     ):
         contents = await file.read()
         tariffs_data = TariffFileProcessor.process_file(contents)
         logger.info(f"Tariff file {file.filename} uploaded and processed.")
-        return await cls.create_tariff(session, tariffs_data, producer)
+        return await cls.create_tariff(session, tariffs_data, kafka, rabbit)
 
     @classmethod
     async def get_tariff_by_id(
@@ -133,9 +141,9 @@ class TariffDAO(BaseDAO):
         redis: RedisClientTariff,
     ) -> TariffRespSchema:
         # Проверяем кеш в редисе. Если есть возвращаем из кеша
-        cache = await redis.get_tariff_cache()
-        if cache and tariff_id in cache:
-            return TariffRespSchema(**cache[tariff_id])
+        cache = await redis.cached_tariff(tariff_id)
+        if cache:
+            return TariffRespSchema(id=tariff_id, **cache)
 
         result = await cls.find_one_or_none_by_id(
             data_id=tariff_id,
@@ -150,8 +158,8 @@ class TariffDAO(BaseDAO):
         # return TariffRespSchema.model_validate(result_dict)
 
         tariff = TariffRespSchema.model_validate(result)
-        # отправляем в редис
-        await redis.set_tariff_cache({tariff_id: tariff.model_dump()})
+        # пишем в редис
+        await redis.set_tariff_cache(tariff_id, tariff.model_dump())
 
         return tariff
 
@@ -175,7 +183,9 @@ class TariffDAO(BaseDAO):
         cls,
         tariff_id: int,
         session: AsyncSession,
-        producer: KafkaProducer,
+        kafka: KafkaProducer,
+        rabbit: RabbitProducer,
+        redis: RedisClientTariff,
     ) -> RespDeleteTariffSchema:
         tariff = await cls.find_one_or_none_by_id(tariff_id, session)
 
@@ -185,7 +195,7 @@ class TariffDAO(BaseDAO):
         # tariff = result.scalar_one_or_none()
 
         if not tariff:
-            logger.warning(f"Tariff with id {tariff_id} not found.")
+            logger.info(f"Tariff with id {tariff_id} not found.")
             raise HTTPException(status_code=404, detail="Тариф не найден")
 
         try:
@@ -203,8 +213,14 @@ class TariffDAO(BaseDAO):
                 date_accession_id=tariff.date_accession_id,
                 tariff_id=tariff_id,
             )
-            await producer.send_message(message)
-            logger.info(f"Send message{message} to kafka")
+            await kafka.send_message(message)
+
+            await rabbit.publish_event(
+                message=message,
+                routing_key=RoutingKey.OBJECT_DELETE,
+            )
+
+            await redis.delete_tariff_cache(tariff_id)
 
             return RespDeleteTariffSchema(
                 message=f"Tariff with ID {tariff_id} has been deleted.",
@@ -218,7 +234,9 @@ class TariffDAO(BaseDAO):
         tariff_id: int,
         new_tariff: UpdateTariffSchema,
         session: AsyncSession,
-        producer: KafkaProducer,
+        kafka: KafkaProducer,
+        rabbit: RabbitProducer,
+        redis: RedisClientTariff,
     ) -> UpdateTariffRespSchema:
         filters = UpdateFilterSchema(id=tariff_id)
         result = await cls.update(session, filters, new_tariff)
@@ -248,8 +266,19 @@ class TariffDAO(BaseDAO):
         #     raise e
         # без наследования (конец)
 
-        message = create_message(action=ActionType.UPDATE_TARIFF, tariff_id=tariff_id)
-        await producer.send_message(message)
+        message = create_message(
+            action=ActionType.UPDATE_TARIFF,
+            tariff_id=tariff_id,
+            new_tariff=new_tariff.model_dump(),
+        )
+
+        await redis.update_tariff_cache(tariff_id, new_tariff.model_dump())
+
+        await kafka.send_message(message)
+        await rabbit.publish_event(
+            message=message,
+            routing_key=RoutingKey.OBJECT_UPDATE,
+        )
 
         return UpdateTariffRespSchema(
             new_tariff=new_tariff.model_dump(exclude_none=True),
@@ -260,7 +289,8 @@ class TariffDAO(BaseDAO):
         cls,
         data: CalculateCostSchema,
         session: AsyncSession,
-        producer: KafkaProducer,
+        kafka: KafkaProducer,
+        rabbit: RabbitProducer,
     ):
         # пример через фильтр модели
         tariff = await cls.find_one_or_none(
@@ -289,7 +319,12 @@ class TariffDAO(BaseDAO):
             str(tariff.updated_at),
             data.tariff_id,
         )
-        await producer.send_message(message)
+        await kafka.send_message(message)
+
+        await rabbit.publish_event(
+            message=message,
+            routing_key=RoutingKey.OBJECT_CALCULATE,
+        )
 
         return CalculateCostResponseSchema(
             tariff_id=data.tariff_id,
