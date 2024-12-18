@@ -60,6 +60,21 @@ services:
       timeout: 5s
       retries: 3
 
+  example-consumer:
+    container_name: example-consumer-smit
+    build: .
+    volumes:
+      - .:/app/
+#    command: [ "python", "app/main_rabbit_consumer.py" ]
+    command: [ "/app_example/docker/consumer.sh" ]
+    networks:
+      - custom
+    env_file:
+      - .env
+    depends_on:
+      - rmq
+      - kafka
+
   zookeeper:
     platform: linux/x86_64
     container_name: zookeeper-smit

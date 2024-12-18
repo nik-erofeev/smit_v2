@@ -10,7 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_CREATE=false \
     LC_ALL=C.UTF-8 \
-    LANG=C.UTF-8
+    LANG=C.UTF-8 \
+    PYTHONPATH="/app_example"
 
 WORKDIR /app_example
 
@@ -32,6 +33,6 @@ RUN pip install --upgrade pip && \
 
 
 RUN chmod +x /app_example/docker/app.sh
-
+RUN chmod +x /app_example/docker/consumer.sh
 
 EXPOSE 8000
