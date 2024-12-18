@@ -5,7 +5,7 @@ from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.tariff.dao import TariffDAO
-from app.api.tariff.example_descriptions import add_tariff_request_example
+from app.api.tariff.rabbit_producer import RabbitProducer
 from app.api.tariff.redis_client import RedisClientTariff
 from app.api.tariff.schemas import (
     CalculateCostResponseSchema,
@@ -17,10 +17,12 @@ from app.api.tariff.schemas import (
     UpdateTariffRespSchema,
     UpdateTariffSchema,
 )
+from app.api.tariff.utils import example_request_add_tariff
 from app.core.settings import APP_CONFIG
 from app.dao.session_maker import TransactionSessionDep
 from app.kafka.dependencies import KafkaProducerDep
 from app.kafka.producer import KafkaProducer
+from app.rabbit.dependencies import RabbitProducerDep
 from app.redis.dependencies import RedisClientTariffDep
 
 router = APIRouter(
@@ -39,15 +41,17 @@ router = APIRouter(
 async def add_tariff(
     tariff_data: dict[date, list[TariffSchema]] = Body(
         ...,
-        example=add_tariff_request_example,
+        example=example_request_add_tariff,
     ),
     session: AsyncSession = TransactionSessionDep,
-    producer: KafkaProducer = KafkaProducerDep,
+    kafka: KafkaProducer = KafkaProducerDep,
+    rabbit: RabbitProducer = RabbitProducerDep,
 ):
     return await TariffDAO.create_tariff(
         session=session,
         tariff_data=tariff_data,
-        producer=producer,
+        kafka=kafka,
+        rabbit=rabbit,
     )
 
 
@@ -61,18 +65,20 @@ async def add_tariff(
 async def calculate_cost(
     data: CalculateCostSchema,
     session: AsyncSession = TransactionSessionDep,
-    producer: KafkaProducer = KafkaProducerDep,
+    kafka: KafkaProducer = KafkaProducerDep,
+    rabbit: RabbitProducer = RabbitProducerDep,
 ):
-    return await TariffDAO.calculate_cost(data, session, producer)
+    return await TariffDAO.calculate_cost(data, session, kafka, rabbit)
 
 
 @router.post("/upload")
 async def upload_tariffs(
     file: UploadFile = File(...),
     session: AsyncSession = TransactionSessionDep,
-    producer: KafkaProducer = KafkaProducerDep,
+    kafka: KafkaProducer = KafkaProducerDep,
+    rabbit: RabbitProducer = RabbitProducerDep,
 ):
-    return await TariffDAO.upload_tariffs(session, producer, file)
+    return await TariffDAO.upload_tariffs(session, kafka, rabbit, file)
 
 
 @router.get(
@@ -104,9 +110,11 @@ async def get_tariff(
 async def delete_tariff(
     tariff_id: int,
     session: AsyncSession = TransactionSessionDep,
-    producer: KafkaProducer = KafkaProducerDep,
+    kafka: KafkaProducer = KafkaProducerDep,
+    rabbit: RabbitProducer = RabbitProducerDep,
+    redis: RedisClientTariff = RedisClientTariffDep,
 ):
-    return await TariffDAO.delete_tariff_by_id(tariff_id, session, producer)
+    return await TariffDAO.delete_tariff_by_id(tariff_id, session, kafka, rabbit, redis)
 
 
 @router.get(
@@ -135,6 +143,15 @@ async def update_tariff(
     tariff_id: int,
     new_tariff: UpdateTariffSchema,
     session: AsyncSession = TransactionSessionDep,
-    producer: KafkaProducer = KafkaProducerDep,
+    kafka: KafkaProducer = KafkaProducerDep,
+    rabbit: RabbitProducer = RabbitProducerDep,
+    redis: RedisClientTariff = RedisClientTariffDep,
 ):
-    return await TariffDAO.update_tariff(tariff_id, new_tariff, session, producer)
+    return await TariffDAO.update_tariff(
+        tariff_id,
+        new_tariff,
+        session,
+        kafka,
+        rabbit,
+        redis,
+    )

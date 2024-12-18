@@ -5,6 +5,8 @@ from pydantic import BaseModel, computed_field, HttpUrl, PostgresDsn
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.rabbit.models import RmqConfig
+
 
 @unique
 class Environments(StrEnum):
@@ -77,6 +79,7 @@ class AppConfig(BaseSettings):
     environment: Environments = Environments.local
     api: Api = Api()
     redis: RedisConfig = RedisConfig()
+    rabbit: RmqConfig = RmqConfig()
 
     secret_key: str | None = None  # secrets.token_urlsafe(32)
     algorithm: str | None = None

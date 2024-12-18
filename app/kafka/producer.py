@@ -76,6 +76,7 @@ class KafkaProducer:
         self.batches[topic].append(json.dumps(message).encode("utf-8"))
 
         if len(self.batches[topic]) >= self.batch_size:
+            logger.info(f"Send kafka message {message} in topik {topic} ")
             await self.send_batch(topic)
 
     async def send_batch(self, topic: str) -> None:
