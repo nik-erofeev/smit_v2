@@ -2,19 +2,15 @@ import aio_pika
 from aiormq import ChannelNotFoundEntity
 from loguru import logger
 
-from app.rabbit.models import ExchangeSettings, RmqConfig
+from app.rabbit.models import RmqConfig
 
 
 class BaseProducer:
     def __init__(
         self,
         rmq_config: RmqConfig,
-        exchange_settings: ExchangeSettings,
-        base_vhost: str,
     ):
         self.rmq_config = rmq_config
-        self.exchange_settings = exchange_settings
-        self.__base_vhost = base_vhost
         self.__connection: aio_pika.Connection | None = None
         self.__channel: aio_pika.Channel | None = None
         self.__exchange: aio_pika.Exchange | None = None
@@ -36,22 +32,16 @@ class BaseProducer:
 
     async def __get_exchange(self, channel):
         try:
-            exchange = await channel.get_exchange(name=self.exchange_settings.name)
-        except ChannelNotFoundEntity as e:
+            exchange = await channel.get_exchange(name=self.rmq_config.exchange_name)
+        except ChannelNotFoundEntity:
             await channel.reopen()
-            # Разрешаем создавать только в нашем vhost
-            if (
-                self.exchange_settings.declare
-                and self.rmq_config.vhost == self.__base_vhost  # noqa: W503
-            ):
-                exchange = await channel.declare_exchange(
-                    name=self.exchange_settings.name,
-                    type=self.exchange_settings.type,
-                    durable=self.exchange_settings.durable,
-                    arguments=self.exchange_settings.arguments,
-                )
-            else:
-                raise e
+            logger.debug(f"Declaring exchange: {self.rmq_config.exchange_name}")
+            exchange = await channel.declare_exchange(
+                name=self.rmq_config.exchange_name,
+                type=self.rmq_config.exchange_type,
+                durable=self.rmq_config.exchange_durable,
+                arguments=self.rmq_config.exchange_arguments,
+            )
         return exchange
 
     async def publish(

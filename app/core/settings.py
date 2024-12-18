@@ -73,13 +73,14 @@ class Api(BaseModel):
 
 class AppConfig(BaseSettings):
     db: DbConfig = DbConfig()
-    kafka: KafkaConfig = KafkaConfig()
+    kafka: KafkaConfig = KafkaConfig()  # producer
     sentry_dsn: HttpUrl | None = None
     tg: TGConfig = TGConfig()
     environment: Environments = Environments.local
     api: Api = Api()
     redis: RedisConfig = RedisConfig()
-    rabbit: RmqConfig = RmqConfig()
+    rabbit: RmqConfig = RmqConfig()  # producer
+    consumer: RmqConfig = RmqConfig()  # consumer
 
     secret_key: str | None = None  # secrets.token_urlsafe(32)
     algorithm: str | None = None

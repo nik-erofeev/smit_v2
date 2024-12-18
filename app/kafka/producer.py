@@ -92,3 +92,11 @@ class KafkaProducer:
                 f"Batch of {len(self.batches[topic])} messages sent to Kafka topic '{topic}.'",  # noqa: E501
             )
             self.batches[topic].clear()
+
+    # для consumer'a RMQ
+    async def __aenter__(self) -> "KafkaProducer":
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        await self.stop()
